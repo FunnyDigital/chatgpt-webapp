@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChatGPT Web Chat</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }
+    #chat { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    #messages { height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 5px; margin-bottom: 10px; }
+    .message { margin: 10px 0; }
+    .user { font-weight: bold; color: blue; }
+    .bot { font-weight: bold; color: green; }
+    input[type="text"] { width: calc(100% - 90px); padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+    button { padding: 10px; border: none; background-color: blue; color: white; border-radius: 5px; cursor: pointer; }
+    button:hover { background-color: darkblue; }
+    #fileInput { margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <div id="chat">
+    <div id="messages"></div>
+    <input type="file" id="fileInput" accept=".txt,.md,.json,.csv,.pdf,.doc,.docx" />
+    <input type="text" id="input" placeholder="Ask something..." />
+    <button onclick="sendMessage()">Send</button>
+  </div>
+
+  <script>
+    let fileContent = null;
+    const fileInput = document.getElementById('fileInput');
+    const input = document.getElementById('input');
+    const messages = document.getElementById('messages');
+
+    fileInput.addEventListener('change', async function() {
+      const file = fileInput.files[0];
+      if (!file) {
+        fileContent = null;
+        return;
+      }
+      // Only read as text for demo; for PDF/DOCX, you'd need extra libraries
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        fileContent = e.target.result;
+        input.value = `Document: ${file.name}`;
+      };
+      reader.readAsText(file);
+    });
+
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+
+    async function sendMessage() {
+      let text = input.value;
+      if (!text && !fileContent) return;
+
+      if (fileContent) {
+        messages.innerHTML += `<div class="message"><span class="user">You (Document):</span> ${fileInput.files[0].name}</div>`;
+        text = fileContent;
+        fileInput.value = '';
+        fileContent = null;
+        input.value = '';
+      } else {
+        messages.innerHTML += `<div class="message"><span class="user">You:</span> ${text}</div>`;
+        input.value = '';
+      }
+
+      try {
+        const response = await fetch('http://localhost:5000/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text })
+        });
+
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const data = await response.json();
+        messages.innerHTML += `<div class="message"><span class="bot">ChatGPT:</span> ${data.reply}</div>`;
+      } catch (error) {
+        messages.innerHTML += `<div class="message"><span class="bot">Error:</span> ${error.message}</div>`;
+      }
+    }
+  </script>
+</body>
+</html>
