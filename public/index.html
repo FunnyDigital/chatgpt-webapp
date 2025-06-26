@@ -3,85 +3,169 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ChatGPT Web Chat</title>
+  <title>Excel Comparative Analysis</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }
-    #chat { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    #messages { height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 5px; margin-bottom: 10px; }
-    .message { margin: 10px 0; }
-    .user { font-weight: bold; color: blue; }
-    .bot { font-weight: bold; color: green; }
-    input[type="text"] { width: calc(100% - 90px); padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
-    button { padding: 10px; border: none; background-color: blue; color: white; border-radius: 5px; cursor: pointer; }
-    button:hover { background-color: darkblue; }
-    #fileInput { margin-bottom: 10px; }
+    body {
+      font-family: 'Roboto', Arial, sans-serif;
+      background: linear-gradient(135deg, #232526 0%, #414345 100%);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      color: #222;
+    }
+    #container {
+      max-width: 700px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(44,62,80,0.15);
+      padding: 32px 32px 24px 32px;
+    }
+    h1 {
+      text-align: center;
+      color: #2d3e50;
+      margin-bottom: 24px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    .file-upload {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      gap: 16px;
+    }
+    .file-upload label {
+      flex: 1;
+      background: #f5f7fa;
+      border: 2px dashed #2980b9;
+      border-radius: 8px;
+      padding: 18px 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      font-weight: 500;
+      color: #2980b9;
+    }
+    .file-upload input[type="file"] {
+      display: none;
+    }
+    .file-name {
+      font-size: 0.95em;
+      color: #16a085;
+      margin-top: 8px;
+      min-height: 18px;
+    }
+    #analyzeBtn {
+      width: 100%;
+      padding: 14px;
+      background: #2980b9;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1em;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 18px;
+      transition: background 0.2s;
+    }
+    #analyzeBtn:hover {
+      background: #1c5d8c;
+    }
+    #result {
+      background: #f5f7fa;
+      border-radius: 8px;
+      padding: 18px;
+      margin-top: 10px;
+      font-size: 1.05em;
+      color: #222;
+      min-height: 60px;
+      box-shadow: 0 2px 8px rgba(44,62,80,0.07);
+    }
+    .section-title {
+      color: #2980b9;
+      font-weight: 700;
+      margin-top: 18px;
+      margin-bottom: 6px;
+    }
+    @media (max-width: 600px) {
+      #container { padding: 12px 4px; }
+      .file-upload { flex-direction: column; gap: 8px; }
+    }
   </style>
 </head>
 <body>
-  <div id="chat">
-    <div id="messages"></div>
-    <input type="file" id="fileInput" accept=".txt,.md,.json,.csv,.pdf,.doc,.docx" />
-    <input type="text" id="input" placeholder="Ask something..." />
-    <button onclick="sendMessage()">Send</button>
+  <div id="container">
+    <h1>Excel Comparative Analysis</h1>
+    <div class="file-upload">
+      <label>
+        Month 1 Excel
+        <input type="file" id="month1" accept=".xlsx,.xls" />
+        <div class="file-name" id="name1"></div>
+      </label>
+      <label>
+        Month 2 Excel
+        <input type="file" id="month2" accept=".xlsx,.xls" />
+        <div class="file-name" id="name2"></div>
+      </label>
+    </div>
+    <button id="analyzeBtn">Analyze & Compare</button>
+    <div id="result"></div>
   </div>
-
   <script>
-    let fileContent = null;
-    const fileInput = document.getElementById('fileInput');
-    const input = document.getElementById('input');
-    const messages = document.getElementById('messages');
+    const month1 = document.getElementById('month1');
+    const month2 = document.getElementById('month2');
+    const name1 = document.getElementById('name1');
+    const name2 = document.getElementById('name2');
+    const result = document.getElementById('result');
+    const analyzeBtn = document.getElementById('analyzeBtn');
 
-    fileInput.addEventListener('change', async function() {
-      const file = fileInput.files[0];
-      if (!file) {
-        fileContent = null;
+    month1.addEventListener('change', () => {
+      name1.textContent = month1.files[0] ? month1.files[0].name : '';
+    });
+    month2.addEventListener('change', () => {
+      name2.textContent = month2.files[0] ? month2.files[0].name : '';
+    });
+
+    analyzeBtn.onclick = async () => {
+      result.textContent = '';
+      if (!month1.files[0] || !month2.files[0]) {
+        result.textContent = 'Please upload both Excel files.';
         return;
       }
-      // Only read as text for demo; for PDF/DOCX, you'd need extra libraries
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        fileContent = e.target.result;
-        input.value = `Document: ${file.name}`;
-      };
-      reader.readAsText(file);
-    });
+      const formData = new FormData();
+      formData.append('month1', month1.files[0]);
+      formData.append('month2', month2.files[0]);
 
-    input.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
-        sendMessage();
-      }
-    });
-
-    async function sendMessage() {
-      let text = input.value;
-      if (!text && !fileContent) return;
-
-      if (fileContent) {
-        messages.innerHTML += `<div class="message"><span class="user">You (Document):</span> ${fileInput.files[0].name}</div>`;
-        text = fileContent;
-        fileInput.value = '';
-        fileContent = null;
-        input.value = '';
-      } else {
-        messages.innerHTML += `<div class="message"><span class="user">You:</span> ${text}</div>`;
-        input.value = '';
-      }
+      analyzeBtn.disabled = true;
+      analyzeBtn.textContent = 'Analyzing...';
 
       try {
-        const response = await fetch('http://localhost:5000/chat', {
+        const res = await fetch('http://localhost:5000/compare', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text })
+          body: formData
         });
-
-        if (!response.ok) throw new Error('Network response was not ok');
-
-        const data = await response.json();
-        messages.innerHTML += `<div class="message"><span class="bot">ChatGPT:</span> ${data.reply}</div>`;
-      } catch (error) {
-        messages.innerHTML += `<div class="message"><span class="bot">Error:</span> ${error.message}</div>`;
+        if (!res.ok) throw new Error('Failed to analyze files.');
+        const data = await res.json();
+        result.innerHTML = `
+          <div class="section-title">Month 1</div>
+          Rows: <b>${data.analysis.month1.rows}</b><br>
+          Columns: <b>${data.analysis.month1.columns.join(', ')}</b>
+          <div class="section-title">Month 2</div>
+          Rows: <b>${data.analysis.month2.rows}</b><br>
+          Columns: <b>${data.analysis.month2.columns.join(', ')}</b>
+          <div class="section-title">Comparison</div>
+          Row Difference: <b>${data.analysis.comparison.rowDifference}</b><br>
+          Column Difference: <b>${data.analysis.comparison.columnDifference}</b><br>
+          Columns in Month 1 not in Month 2: <b>${data.analysis.comparison.columnsInMonth1NotInMonth2.join(', ') || 'None'}</b><br>
+          Columns in Month 2 not in Month 1: <b>${data.analysis.comparison.columnsInMonth2NotInMonth1.join(', ') || 'None'}</b>
+        `;
+      } catch (err) {
+        result.textContent = 'Error: ' + err.message;
       }
-    }
+      analyzeBtn.disabled = false;
+      analyzeBtn.textContent = 'Analyze & Compare';
+    };
   </script>
 </body>
 </html>
