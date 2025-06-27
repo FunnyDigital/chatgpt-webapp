@@ -3,7 +3,6 @@ const cors = require('cors');
 const multer = require('multer');
 const XLSX = require('xlsx');
 const axios = require('axios');
-require('dotenv').config();
 
 const app = express();
 app.use(cors());
@@ -42,7 +41,7 @@ app.post('/compare', upload.fields([{ name: 'month1' }, { name: 'month2' }]), as
       }
     };
 
-    // Prepare a prompt for ChatGPT (send only summary/sample to avoid token limits)
+    // Prepare a prompt for Qwen2.5 (Ollama)
     const prompt = `
 I have two Excel sheets for two months. Here is a summary:
 Month 1: ${analysis.month1.rows} rows, columns: ${analysis.month1.columns.join(', ')}
@@ -55,30 +54,22 @@ Columns in Month 2 not in Month 1: ${analysis.comparison.columnsInMonth2NotInMon
 Please provide a brief comparative analysis and any insights you can infer from this summary.
     `;
 
-    let gptAnalysis = '';
+    let qwenAnalysis = '';
     try {
-      // For OpenAI:
-      // const gptRes = await axios.post(
-      //   'https://api.openai.com/v1/chat/completions',
-      //   { model: 'gpt-3.5-turbo', messages: [{ role: 'user', content: prompt }] },
-      //   { headers: { 'Authorization': `Bearer ${process.env.OPENAI_API_KEY}` } }
-      // );
-
-      // For Ollama (Qwen2.5):
       const ollamaRes = await axios.post(
         'http://localhost:11434/api/chat',
         {
-          model: 'qwen2.5', // or whatever your model is called in Ollama
+          model: 'qwen2.5',
           messages: [{ role: 'user', content: prompt }]
         }
       );
-      gptAnalysis = ollamaRes.data.message.content;
-    } catch (gptErr) {
-      console.error('OpenAI API error:', gptErr.response ? gptErr.response.data : gptErr.message);
-      gptAnalysis = 'Could not get analysis from ChatGPT.';
+      qwenAnalysis = ollamaRes.data.message.content;
+    } catch (err) {
+      console.error('Ollama API error:', err.response ? err.response.data : err.message);
+      qwenAnalysis = 'Could not get analysis from Qwen2.5.';
     }
 
-    res.json({ analysis, gptAnalysis });
+    res.json({ analysis, qwenAnalysis });
   } catch (error) {
     console.error('Excel analysis error:', error);
     res.status(500).json({ error: 'Failed to analyze Excel files.' });
