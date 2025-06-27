@@ -57,20 +57,22 @@ Please provide a brief comparative analysis and any insights you can infer from 
 
     let gptAnalysis = '';
     try {
-      const gptRes = await axios.post(
-        'https://api.openai.com/v1/chat/completions',
+      // For OpenAI:
+      // const gptRes = await axios.post(
+      //   'https://api.openai.com/v1/chat/completions',
+      //   { model: 'gpt-3.5-turbo', messages: [{ role: 'user', content: prompt }] },
+      //   { headers: { 'Authorization': `Bearer ${process.env.OPENAI_API_KEY}` } }
+      // );
+
+      // For Ollama (Qwen2.5):
+      const ollamaRes = await axios.post(
+        'http://localhost:11434/api/chat',
         {
-          model: 'gpt-3.5-turbo',
-          messages: [{ role: 'user', content: prompt }],
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
+          model: 'qwen2.5', // or whatever your model is called in Ollama
+          messages: [{ role: 'user', content: prompt }]
         }
       );
-      gptAnalysis = gptRes.data.choices[0].message.content;
+      gptAnalysis = ollamaRes.data.message.content;
     } catch (gptErr) {
       console.error('OpenAI API error:', gptErr.response ? gptErr.response.data : gptErr.message);
       gptAnalysis = 'Could not get analysis from ChatGPT.';
