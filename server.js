@@ -59,14 +59,14 @@ Please provide a brief comparative analysis and any insights you can infer from 
       const ollamaRes = await axios.post(
         'http://localhost:11434/api/chat',
         {
-          model: 'qwen2.5',
+          model: 'deepseek-r1:14b', // changed from 'qwen2.5'
           messages: [{ role: 'user', content: prompt }]
         }
       );
       qwenAnalysis = ollamaRes.data.message.content;
     } catch (err) {
       console.error('Ollama API error:', err.response ? err.response.data : err.message);
-      qwenAnalysis = 'Could not get analysis from Qwen2.5.';
+      qwenAnalysis = 'Could not get analysis from DeepSeek-R1:14B.';
     }
 
     res.json({ analysis, qwenAnalysis });
