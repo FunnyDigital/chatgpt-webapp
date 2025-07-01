@@ -59,11 +59,33 @@ Please provide a brief comparative analysis and any insights you can infer from 
       const ollamaRes = await axios.post(
         'http://localhost:11434/api/chat',
         {
-          model: 'deepseek-r1:14b', // changed from 'qwen2.5'
+          model: 'deepseek-r1:14b',
           messages: [{ role: 'user', content: prompt }]
-        }
+        },
+        { responseType: 'stream' }
       );
-      qwenAnalysis = ollamaRes.data.message.content;
+
+      let responseText = '';
+      ollamaRes.data.on('data', chunk => {
+        // Each chunk is a JSON line
+        const lines = chunk.toString().split('\n').filter(Boolean);
+        for (const line of lines) {
+          try {
+            const parsed = JSON.parse(line);
+            if (parsed.message && parsed.message.content) {
+              responseText += parsed.message.content;
+            }
+          } catch (e) {
+            // Ignore malformed lines
+          }
+        }
+      });
+
+      await new Promise(resolve => ollamaRes.data.on('end', resolve));
+      // Format output: replace newlines with <br> for HTML display
+      qwenAnalysis = responseText
+        ? responseText.replace(/\n{2,}/g, '<br><br>').replace(/\n/g, '<br>').trim()
+        : 'No response from DeepSeek-R1:14B. Please check if the model is running in Ollama.';
     } catch (err) {
       console.error('Ollama API error:', err.response ? err.response.data : err.message);
       qwenAnalysis = 'Could not get analysis from DeepSeek-R1:14B.';

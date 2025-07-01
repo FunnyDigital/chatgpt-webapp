@@ -160,7 +160,7 @@
           Columns in Month 1 not in Month 2: <b>${data.analysis.comparison.columnsInMonth1NotInMonth2.join(', ') || 'None'}</b><br>
           Columns in Month 2 not in Month 1: <b>${data.analysis.comparison.columnsInMonth2NotInMonth1.join(', ') || 'None'}</b>
           <div class="section-title">DeepSeek-R1:14B Insights</div>
-          <div style="background:#eef6fa;padding:12px;border-radius:6px;margin-top:8px;">${data.qwenAnalysis}</div>
+          <div style="background:#eef6fa;padding:12px;border-radius:6px;margin-top:8px;white-space:pre-line;">${data.qwenAnalysis}</div>
         `;
       } catch (err) {
         result.textContent = 'Error: ' + err.message;
